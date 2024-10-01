@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>할 일 수정</title>
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body>
+<div class="todo-container">
+    <h1>할 일 수정</h1>
+    <form th:action="@{'/todo/update/' + ${todo.tno}}" th:object="${todo}" method="post">
+        <div class="form-group">
+            <label for="title">제목</label>
+            <input type="text" id="title" name="title" th:value="*{title}" required>
+        </div>
+        <div class="form-group">
+            <button type="submit">업데이트</button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

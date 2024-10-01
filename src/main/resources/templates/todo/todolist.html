@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="Diary Detail Page" />
+    <meta name="author" content="DailyTo" />
+    <title>일기 상세 페이지</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <!-- Custom Google Font-->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;900&display=swap" rel="stylesheet" />
+    <!-- Bootstrap Icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Core Theme CSS (includes Bootstrap)-->
+    <link href="/css/styles.css" rel="stylesheet" />
+    <!-- Custom CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #ffffff; /* 배경색 변경 */
+        }
+
+        .todo-container {
+            background: white;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #todo-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        #todo-list li {
+            border-bottom: 1px solid #ddd;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        #todo-list li:last-child {
+            border-bottom: none;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        button {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+
+        .completed {
+            color: #ccc;
+            text-decoration: line-through;
+        }
+
+        .edit-btn, .delete-btn {
+            margin-left: 20px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* Flatpickr 커스터마이징 */
+        .flatpickr-prev-month, .flatpickr-next-month {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100">
+    <main class="flex-shrink-0">
+        <!-- Navigation-->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
+            <div class="container px-5">
+                <a class="navbar-brand" th:href="@{/main}"><span class="fw-bolder text-primary">DailyTo</span></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
+                        <li class="nav-item"><a class="nav-link" th:href="@{/main}">Main</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/todo/todolist}">Todolist</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/diary/diaries}">Diary</a></li>
+                                        <li sec:authorize="isAuthenticated()" class="nav-item"><a class="nav-link" href="mypage"><span th:text="${#authentication.principal.username}"></span> 님</a></li>
+                        <li sec:authorize="isAuthenticated()" class="nav-item">
+                            <form method="post" action="/logout" style="display:inline;">
+                                <button type="submit" class="btn btn-link nav-link">Logout</button>
+                            </form>
+                        </li>
+                        <li sec:authorize="isAnonymous()" class="nav-item">
+                            <a class="nav-link" href="login/login">Login</a>
+                        </li> 
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="todo-container form-check">
+            <h1>오늘의 할 일</h1>
+            <input type="text" id="date-picker" placeholder="날짜 선택">
+            
+            <button type="button" class="btn btn-primary mb-3" onclick="loadTodayTasks()">오늘 할 일</button>
+            <ul id="todo-list">
+                <li th:each="todo : ${todos}" th:data-tno="${todo.tno}" th:classappend="${todo.complete} ? 'completed' : ''">
+                    <input type="checkbox" th:checked="${todo.complete}" onclick="toggleTaskCompleted(this)">
+                    <span th:text="${todo.title}"></span>
+                    <span th:text="${todo.dueDate}"></span> <!-- dueDate 표시 -->
+                    <button class="edit-btn" onclick="editTask(this)">수정</button>
+                    <button class="delete-btn" onclick="confirmDelete(this)">삭제</button>
+                </li>
+            </ul>
+            <input type="text" placeholder="새 할일 입력" id="new-task">
+            <button type="button" class="btn btn-outline-" onclick="addTask()">할일 추가</button>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+   <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            flatpickr("#date-picker", {
+                dateFormat: "Y-m-d",
+                defaultDate: new Date(), // 페이지 로드 시 오늘 날짜로 설정
+                onChange: function(selectedDates, dateStr, instance) {
+                    loadTasksByDate(dateStr);
+                }
+            });
+
+            loadTasksByDate(new Date().toISOString().split('T')[0]); // 페이지 로드 시 오늘 날짜의 할 일 로드
+
+            const checkboxes = document.querySelectorAll('#todo-list input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const listItem = this.closest('li');
+                    const tno = listItem.getAttribute('data-tno');
+                    const isChecked = this.checked;
+
+                    toggleTaskCompleted(this, tno, isChecked);
+                });
+            });
+        });
+
+        function loadTasksByDate(date) {
+            fetch(`/todo/date/${date}`)
+                .then(response => response.json())
+                .then(todos => {
+                    if (!Array.isArray(todos)) {
+                        throw new Error('Invalid response format');
+                    }
+                    const list = document.getElementById('todo-list');
+                    list.innerHTML = '';
+                    todos.forEach(todo => {
+                        const newItem = document.createElement('li');
+                        newItem.setAttribute('data-tno', todo.tno);
+                        newItem.classList.toggle('completed', todo.complete);
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = todo.complete;
+                        checkbox.onclick = function() { toggleTaskCompleted(this); };
+
+                        const span = document.createElement('span');
+                        span.textContent = todo.title;
+
+                        const dueDateSpan = document.createElement('span'); // dueDate 표시
+                        dueDateSpan.textContent = todo.dueDate;
+
+                        const editButton = document.createElement('button');
+                        editButton.textContent = '수정';
+                        editButton.className = 'edit-btn';
+                        editButton.onclick = function() { editTask(this); };
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = '삭제';
+                        deleteButton.className = 'delete-btn';
+                        deleteButton.onclick = function() { confirmDelete(this); };
+
+                        newItem.appendChild(checkbox);
+                        newItem.appendChild(span);
+                        newItem.appendChild(dueDateSpan); // dueDate 추가
+                        newItem.appendChild(editButton);
+                        newItem.appendChild(deleteButton);
+                        list.appendChild(newItem);
+                    });
+                })
+                .catch(error => console.error('Error fetching tasks:', error));
+        }
+
+        function loadTodayTasks() {
+            loadTasksByDate(new Date().toISOString().split('T')[0]);
+        }
+
+        function loadTomorrowTasks() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            loadTasksByDate(tomorrow.toISOString().split('T')[0]);
+        }
+
+        function toggleTaskCompleted(checkbox) {
+            const listItem = checkbox.closest('li');
+            const tno = listItem.getAttribute('data-tno');
+            const isChecked = checkbox.checked;
+
+            listItem.classList.toggle('completed', isChecked);
+
+            if (isChecked) {
+                listItem.parentNode.appendChild(listItem); // 목록 맨 끝으로 이동
+            } else {
+                listItem.parentNode.insertBefore(listItem, listItem.parentNode.firstChild); // 목록 맨 위로 이동
+            }
+
+            // 서버에 상태 업데이트 요청
+            fetch(`/todo/todos/${tno}/complete`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ complete: isChecked })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to update');
+                console.log('Update successful');
+            })
+            .catch(error => console.error('Error updating task:', error));
+        }
+
+        function addTask() {
+            const input = document.getElementById('new-task');
+            const newTask = input.value.trim();
+            const dueDate = document.getElementById('date-picker').value; // 날짜 선택 값 가져오기
+
+            if (newTask) {
+                fetch('/todo/todolist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: newTask, dueDate: dueDate }) // dueDate 포함하기
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('todo-list');
+                    const newItem = document.createElement('li');
+                    newItem.setAttribute('data-tno', data.tno);
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.onclick = function(event) { toggleTaskCompleted(this, event); };
+
+                    const span = document.createElement('span');
+                    span.textContent = data.title;
+
+                    const dueDateSpan = document.createElement('span'); // dueDate 표시
+                    dueDateSpan.textContent = data.dueDate;
+
+                    const editButton = document.createElement('button');
+                    editButton.textContent = '수정';
+                    editButton.className = 'edit-btn';
+                    editButton.onclick = function() { editTask(this); };
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = '삭제';
+                    deleteButton.className = 'delete-btn';
+                    deleteButton.onclick = function() { confirmDelete(this); };
+
+                    newItem.appendChild(checkbox);
+                    newItem.appendChild(span);
+                    newItem.appendChild(dueDateSpan); // dueDate 추가
+                    newItem.appendChild(editButton);
+                    newItem.appendChild(deleteButton);
+                    list.appendChild(newItem);
+
+                    input.value = ''; // 입력 필드 초기화
+                })
+                .catch(error => console.error('Error adding task:', error));
+            }
+        }
+
+        function editTask(button) {
+            const listItem = button.closest('li');
+            const tno = listItem.getAttribute('data-tno');
+            const span = listItem.querySelector('span');
+            const dueDateSpan = listItem.querySelector('span + span'); // dueDate span 찾기
+            const currentTitle = span.textContent;
+            const currentDueDate = dueDateSpan.textContent; // 현재 dueDate 가져오기
+
+            const newTitle = prompt('할 일 수정:', currentTitle);
+            if (newTitle !== null && newTitle !== currentTitle) {
+                // 서버에 수정 요청
+                fetch(`/todo/update/${tno}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: newTitle, dueDate: currentDueDate }) // dueDate 포함하기
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to update');
+                    span.textContent = newTitle;
+                    console.log('Update successful');
+                })
+                .catch(error => console.error('Error updating task:', error));
+            }
+        }
+
+        function confirmDelete(button) {
+            const listItem = button.closest('li');
+            const tno = listItem.getAttribute('data-tno');
+            if (confirm('정말 삭제하시겠습니까?')) {
+                // 서버에 삭제 요청
+                fetch(`/todo/todolist/delete/${tno}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to delete');
+                    listItem.remove();
+                    console.log('Delete successful');
+                })
+                .catch(error => console.error('Error deleting task:', error));
+            }
+        }
+    </script>
+</body>
+</html>

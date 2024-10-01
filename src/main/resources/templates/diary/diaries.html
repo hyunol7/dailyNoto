@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>일기 수정하기</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <!-- Custom Google font-->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="/css/styles.css" rel="stylesheet" />
+    <!-- Custom CSS for width adjustments -->
+    <style>
+        .todo-container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        table {
+            width: 100%;
+        }
+        th, td {
+            text-align: center;
+            padding: 10px;
+        }
+        thead th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100">
+    <main class="flex-shrink-0">
+        <!-- Navigation-->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
+            <div class="container px-5">
+                <a class="navbar-brand" th:href="@{/main}"><span class="fw-bolder text-primary">DailyTo</span></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
+                        <li class="nav-item"><a class="nav-link" th:href="@{/main}">Main</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/todo/todolist}">Todolist</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/diary/diaries}">Diary</a></li>
+                                        <li sec:authorize="isAuthenticated()" class="nav-item"><a class="nav-link" href="mypage">Welcome, <span th:text="${#authentication.principal.username}">User</span></a></li>
+                        <li sec:authorize="isAuthenticated()" class="nav-item">
+                            <form method="post" action="/logout" style="display:inline;">
+                                <button type="submit" class="btn btn-link nav-link">Logout</button>
+                            </form>
+                        </li>
+                        <li sec:authorize="isAnonymous()" class="nav-item">
+                            <a class="nav-link" href="/login/login">Login</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        
+        <div class="todo-container form-check">
+            <h1 class="mb-4">오늘의 일기</h1>
+            <button class="btn btn-primary mb-3" onclick="window.location.href='/diary/addDiary'">글쓰기</button>
+            <table >
+                <thead>
+                    <tr>
+                        <th>번호</th>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>작성일</th>
+                        <th>편집</th>
+                        <th>삭제</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="diary : ${diaryList}">
+                        <td th:text="${diary.dno}"></td>
+                        <td><a th:href="@{/diary/detail/{id}(id=${diary.dno})}" th:text="${diary.title}"></a></td>
+                        <td th:text="${diary.nickname}"></td>
+                        <td th:text="${#temporals.format(diary.date, 'yyyy-MM-dd')}"></td>
+
+                        
+                     
+                         
+                           <td>
+                            <!-- Check if the logged-in user is the author -->
+                            <sec:authorize access="isAuthenticated()">
+                                <!-- Only show the buttons if the logged-in user is the author -->
+                                <a th:if="${#authentication.principal.loginId == diary.loginId}" 
+                                   class="btn btn-primary mb-3"  
+                                   th:href="@{/diary/modDiary/{dno}(dno=${diary.dno})}">편집</a>
+                            </sec:authorize>
+                        </td>
+                        <td>
+                            <!-- Only show the delete button if the logged-in user is the author -->
+                            <sec:authorize access="isAuthenticated()">
+                                <button th:if="${#authentication.principal.loginId == diary.loginId}" 
+                                        class="btn btn-primary mb-3" 
+                                        th:onclick="'deleteDiary('+${diary.dno}+');'">삭제</button>
+                            </sec:authorize>
+                        </td>
+ </tr>
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between">
+                  <a th:if="${diaryList.hasPrevious()}" th:href="@{/diary/diaries(page=${diaryList.number - 1})}">이전</a>
+    <span th:each="page : ${#numbers.sequence(startPage, endPage)}">
+        <a th:href="@{/diary/diaries(page=${page - 1})}" th:text="${page}" th:class="${page == diaryList.number + 1 ? 'current' : ''}"></a>
+    </span>
+    <a th:if="${diaryList.hasNext()}" th:href="@{/diary/diaries(page=${diaryList.number + 1})}">다음</a>
+    <a th:href="@{/diary/diaries(page=${diaryList.totalPages - 1})}">마지막</a>
+</div>
+        </div>
+        
+    </main>
+    <!-- Bootstrap core JS-->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core theme JS-->
+    <script src="/js/scripts.js"></script>
+    <script>
+        function deleteDiary(dno) {
+            if (confirm('정말로 삭제하시겠습니까?')) {
+                fetch('/diary/delete/' + dno, {
+                    method: 'POST',  // DELETE 대신 POST 사용
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: '_method=DELETE'  // 서버에서 DELETE로 인식하도록 처리
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('삭제 실패!');
+                    }
+                }).catch(error => console.error('Error:', error));
+            }
+        }
+        
+        function submitComment() {
+        	const dno = document.getElementById('diaryContainer').dataset.dno;
+
+            fetch(`/api/comments/${dno}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ content: content })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                // Update comment list or UI here
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로그인</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        .login-page {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background: #f4f4f4;
+        }
+        .login-content {
+            width: 300px;
+            padding: 40px;
+            margin: 100px auto;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        form.wrapper-box {
+            margin-top: 20px;
+        }
+        form.wrapper-box input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: green;
+            color: white;
+            border: none;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkgreen;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-content">
+        <h2>로그인</h2>
+        <form class="wrapper-box" method="post" action="/login">
+            <input type="text" name="loginId" placeholder="Login ID" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Log in</button>
+        </form>
+        <div class="alert alert-danger" role="alert" style="display: none;">
+            <!-- 동적으로 로그인 오류 메시지를 표시할 요소 -->
+        </div>
+        <a href="/login/join">회원가입</a>
+     
+    </div>
+</body>
+</html>

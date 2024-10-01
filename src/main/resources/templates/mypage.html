@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+<meta name="description" content="" />
+<meta name="author" content="" />
+<title>Personal - Start Bootstrap Theme</title>
+<!-- Favicon-->
+<link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+<!-- Custom Google font-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap"
+	rel="stylesheet" />
+<!-- Bootstrap icons-->
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css"
+	rel="stylesheet" />
+<!-- Core theme CSS (includes Bootstrap)-->
+<link href="/css/styles.css" rel="stylesheet" />
+</head>
+
+<body class="d-flex flex-column h-100">
+	<main class="flex-shrink-0">
+		<!-- Navigation-->
+		<nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
+			<div class="container px-5">
+				<a class="navbar-brand" th:href="@{/main}"><span
+					class="fw-bolder text-primary">DailyTo</span></a>
+				<button class="navbar-toggler" type="button"
+					data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+					aria-controls="navbarSupportedContent" aria-expanded="false"
+					aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
+                        <li class="nav-item"><a class="nav-link" th:href="@{/main}">Main</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/todo/todolist}" th:onclick="'javascript:checkAuthentication(\'' + @{/todo/todolist} + '\');'">Todolist</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/diary/diaries}" th:onclick="'javascript:checkAuthentication(\'' + @{/diary/diaries} + '\');'">Diary</a></li>
+                        <li sec:authorize="isAuthenticated()" class="nav-item"><a class="nav-link" href="mypage"><span th:text="${#authentication.principal.username}"></span> 님</a></li>
+                        <li sec:authorize="isAuthenticated()" class="nav-item"><form method="post" action="/logout" style="display:inline;"><button type="submit" class="btn btn-link nav-link">Logout</button></form></li>
+                        <li sec:authorize="isAnonymous()" class="nav-item"><a class="nav-link" href="login/login">Login</a></li> 
+                    </ul>
+				</div>
+			</div>
+		</nav>
+		<!-- Page Content-->
+		<div class="container px-5 my-5">
+			<div class="text-center mb-5">
+				<h1 class="display-5 fw-bolder mb-0">
+					<span class="text-gradient d-inline">My Page</span>
+				</h1>
+			</div>
+			<div class="row gx-5 justify-content-center">
+				<div class="col-lg-11 col-xl-9 col-xxl-8">
+					<!-- Experience Section-->
+					<section>
+						<div
+							class="d-flex align-items-center justify-content-between mb-4">
+							<a class="btn btn-primary px-4 py-3" th:href="@{/mypage/modUser}">정보 수정하기</a>
+			
+						</div>
+						<!-- todolist-->
+						<div class="card shadow border-0 rounded-4 mb-5">
+							<div class="card-body p-5">
+								<div class="row align-items-center gx-5">
+									<div class="col text-center text-lg-start mb-4 mb-lg-0">
+										<div class="bg-light p-4 rounded-4">
+											<div class="text-primary fw-bolder mb-2">
+											<a th:href="@{/todo/todolist}">Todolist</a></div>
+										</div>
+									</div>
+									<ul>
+    <li th:each="todo, iterStat : ${todos}" th:if="${iterStat.index < 3}">
+        <span th:text="${todo.title}"></span> - 
+        <span th:text="${todo.dueDate}"></span>
+    </li>
+</ul>
+								</div>
+							</div>
+						</div>
+						<!-- diary-->
+						<div class="card shadow border-0 rounded-4 mb-5">
+							<div class="card-body p-5">
+								<div class="row align-items-center gx-5">
+									<div class="col text-center text-lg-start mb-4 mb-lg-0">
+										<div class="bg-light p-4 rounded-4">
+											<div class="text-primary fw-bolder mb-2"><a th:href="@{/diary/diaries}">My diary</a></div>
+										</div>
+									</div>
+									<table>
+										<thead>
+											<tr>
+												<th>제목</th>
+												<th>작성일</th>
+											</tr>
+										</thead>
+										   <tbody>
+        <tr th:each="diary : ${userDiaries}">
+            <td><a th:href="@{/diary/detail/{id}(id=${diary.dno})}" th:text="${diary.title}"></a></td>
+            <td th:text="${#temporals.format(diary.date, 'yyyy-MM-dd')}"></td>
+        </tr>
+    </tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+						<!-- comment-->
+						<div class="card shadow border-0 rounded-4 mb-5">
+							<div class="card-body p-5">
+								<div class="row align-items-center gx-5">
+									<div class="col text-center text-lg-start mb-4 mb-lg-0">
+										<div class="bg-light p-4 rounded-4">
+											<div class="text-primary fw-bolder mb-2">내가 쓴 댓글</div>
+										</div>
+									</div>
+									<!-- 댓글 목록이 있을 경우에만 출력 -->
+<!-- 댓글 목록이 있을 경우에만 출력 -->
+<ul>
+    <li th:each="comment : ${comments}">
+        <!-- 일기 ID(dno)를 사용하여 링크 생성 -->
+        <a th:href="@{/diary/detail/{dno}(dno=${comment.diaryId})}" th:text="${comment.content}"></a>
+        <span th:text="${#dates.format(comment.date, 'yyyy-MM-dd')}"></span> <!-- 날짜 출력 -->
+    </li>
+</ul>
+
+
+
+								</div>
+							</div>
+						</div>
+					</section>
+
+
+				</div>
+			</div>
+		</div>
+	</main>
+	<!-- Footer-->
+	<footer class="bg-white py-4 mt-auto">
+		<div class="container px-5">
+			<div
+				class="row align-items-center justify-content-between flex-column flex-sm-row">
+				<div class="col-auto">
+					<div class="small m-0">Copyright &copy; Your Website 2023</div>
+				</div>
+				<div class="col-auto">
+					<a class="small" href="#!">Privacy</a> <span class="mx-1">&middot;</span>
+					<a class="small" href="#!">Terms</a> <span class="mx-1">&middot;</span>
+					<a class="small" href="#!">Contact</a>
+				</div>
+			</div>
+		</div>
+	</footer>
+	<!-- Bootstrap core JS-->
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="js/scripts.js"></script>
+	<script>
+        function deleteUser() {
+            if (confirm("정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+                fetch('/mypage/deleteUser', {
+                    method: 'DELETE',
+                    credentials: 'include'  // 쿠키/인증 정보를 함께 보내려면 필요
+                }).then(response => {
+                    if (!response.ok) throw new Error('회원 탈퇴에 실패했습니다.');
+                    alert('회원 탈퇴가 성공적으로 처리되었습니다.');
+                    window.location.href = '/login';  // 로그인 페이지 또는 홈 페이지로 리다이렉트
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+        }
+        </script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>일기 수정 및 댓글 관리</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <!-- Custom Google font-->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
+    <!-- Bootstrap icons-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="/css/styles.css" rel="stylesheet" />
+    <style>
+        .todo-container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        table {
+            width: 100%;
+        }
+        th, td {
+            text-align: center;
+            padding: 10px;
+        }
+        thead th {
+            background-color: #f8f9fa;
+        }
+        .header { background-color: #f8f9fa; padding: 10px 0; border-bottom: 1px solid #e0e0e0; text-align: center; }
+        .info { display: flex; justify-content: center; align-items: center; gap: 20px; }
+        .content { margin-top: 20px; }
+        .comments { margin-top: 40px; }
+        .comment { background: #f4f4f4; padding: 8px 15px; border-radius: 8px; margin-top: 5px; }
+        .container { max-width: 800px; margin: auto; }
+    </style>
+</head>
+<body class="d-flex flex-column h-100">
+    <main class="flex-shrink-0">
+        <!-- Navigation-->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
+            <div class="container px-5">
+                <a class="navbar-brand" th:href="@{/main}"><span class="fw-bolder text-primary">DailyTo</span></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
+                        <li class="nav-item"><a class="nav-link" th:href="@{/main}">Main</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/todo/todolist}" th:onclick="'javascript:checkAuthentication(\'' + @{/todo/todolist} + '\');'">Todolist</a></li>
+                        <li class="nav-item"><a class="nav-link" th:href="@{/diary/diaries}" th:onclick="'javascript:checkAuthentication(\'' + @{/diary/diaries} + '\');'">Diary</a></li>
+                        <li sec:authorize="isAuthenticated()" class="nav-item"><a class="nav-link" href="/mypage"><span th:text="${#authentication.principal.username}"></span> 님</a></li>
+                        <li sec:authorize="isAuthenticated()" class="nav-item"><form method="post" action="/logout" style="display:inline;"><button type="submit" class="btn btn-link nav-link">Logout</button></form></li>
+                        <li sec:authorize="isAnonymous()" class="nav-item"><a class="nav-link" href="login/login">Login</a></li> 
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+       
+         
+
+        <!-- Diary Detail and Comments -->
+        <div class="container">
+            <div class="header">
+                <h1 th:text="${diary.title}">제목</h1>
+                <div class="info">
+                    <span th:text="${diary.nickname}">작성자</span>
+                    <span th:text="${#temporals.format(diary.date, 'yyyy-MM-dd')}">작성일</span>
+                    <span th:switch="${diary.mood}">
+                        <span th:case="'happy'">😊</span>
+                        <span th:case="'sad'">😢</span>
+                        <span th:case="'angry'">😠</span>
+                        <span th:case="'surprised'">😲</span>
+                        <span th:case="'neutral'">보통</span>
+                        <span th:case="*">기타</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="content">
+                             
+                <p th:text="${diary.content}">내용</p>
+            </div>
+
+            <!-- 이미지 갤러리 -->
+            <!-- 이미지 갤러리 -->
+<div id="imageGallery">
+    <div th:if="${diary.imageList != null}">
+        <div th:each="image : ${diary.imageList}">
+            <img th:src="@{${image.imgPath}}" alt="Diary Image" style="max-width: 50%; height: auto;" />
+        </div>
+    </div>
+</div>
+
+            <!-- Comments Section -->
+            <div class="comments">
+                <h3>댓글</h3>
+                <div th:if="${comment.empty}">
+                    <p>댓글이 없습니다.</p>
+                </div>
+                <div th:unless="${comment.empty}">
+                    <ul id="commentsList">
+                        <li th:each="comment : ${comment}" class="comment">
+                            <p><b th:text="${comment.nickname}">Nickname</b>: <span th:text="${comment.content}">Comment content</span></p>
+                                  <p th:text="${#temporals.format(comment.date, 'yyyy-MM-dd')}">Date</p>
+
+                            <!-- Modify and Delete buttons for the comment -->
+                            <button th:if="${#authentication.principal.loginId == comment.loginId}" 
+                                    type="button" class="btn btn-primary mb-3" 
+                                    th:onclick="'modComment(' + ${comment.cno} + ');'">수정</button>
+
+                            <button th:if="${#authentication.principal.loginId == comment.loginId}" 
+                                    type="button" class="btn btn-primary mb-3" 
+                                    th:onclick="'deleteComment(' + ${comment.cno} + ');'">삭제</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Add Comment Form -->
+                <form id="commentForm" method="post">
+                    <input type="hidden" id="dno" th:value="${diary.dno}" />
+                    <textarea id="commentInput" class="form-control" placeholder="댓글을 입력하세요..." required></textarea>
+                    <button type="button" class="btn btn-primary mt-3" onclick="submitComment()">댓글 달기</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        function deleteDiary(dno) {
+            if (confirm('정말로 삭제하시겠습니까?')) {
+                fetch('/diary/delete/' + dno, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: '_method=DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('삭제 실패!');
+                    }
+                }).catch(error => console.error('Error:', error));
+            }
+        }
+
+        function submitComment() {
+            const dno = document.getElementById('dno').value;
+            const commentContent = document.getElementById('commentInput').value;
+
+            if (!commentContent.trim()) {
+                alert('댓글 내용을 입력해주세요.');
+                return;
+            }
+
+            fetch(`/comments/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: commentContent, diaryId: dno })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update UI here after adding comment
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || '댓글 추가에 실패했습니다.');
+            });
+        }
+
+        function modComment(cno) {
+            const content = prompt("댓글을 수정하세요:");
+            if (content) {
+                fetch(`/comments/update/${cno}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: content })
+                }).then(response => {
+                    if (!response.ok) throw new Error('댓글 수정 실패');
+                    return response.json();
+                }).then(updatedComment => {
+                    window.location.reload();
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+        }
+
+        function deleteComment(cno) {
+            if (confirm("댓글을 삭제하시겠습니까?")) {
+                fetch(`/comments/delete/${cno}`, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (!response.ok) throw new Error('댓글 삭제 실패');
+                    window.location.reload();
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
